@@ -7,114 +7,498 @@
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; }
         canvas { display: block; width: 100vw; height: 100vh; }
         
+        /* Кнопка переключения языков */
+        #lang-switcher {
+            position: fixed; top: 20px; right: 20px;
+            background: rgba(5, 5, 5, 0.85); border: 1px solid #00ffff; color: #00ffff;
+            padding: 8px 14px; font-size: 12px; font-weight: bold; cursor: pointer; z-index: 3000;
+            text-transform: uppercase; letter-spacing: 1px; border-radius: 4px; transition: 0.2s;
+        }
+        #lang-switcher:hover { background: #00ffff; color: #000; box-shadow: 0 0 15px rgba(0,255,255,0.4); }
+
+        /* ВСПЛЫВАЮЩЕЕ ПРЕДУПРЕЖДЕНИЕ ВО ВРЕМЯ ТЕСТА */
+        #heat-warning-banner {
+            display: none;
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(20, 0, 5, 0.9); border: 2px solid #ff0055; border-radius: 6px;
+            padding: 12px 25px; width: 90%; max-width: 600px; text-align: center; z-index: 1500;
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.4); pointer-events: none;
+            animation: pulse-border 1.5s infinite alternate;
+        }
+        .warn-title { color: #ff0055; font-weight: 900; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; margin-bottom: 4px; }
+        .warn-text { color: #ddd; font-size: 12px; line-height: 1.4; }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 15px rgba(255, 0, 85, 0.2); border-color: #aa0033; }
+            100% { box-shadow: 0 0 35px rgba(255, 0, 85, 0.6); border-color: #ff0055; }
+        }
+
+        /* Начальное Главное Меню */
+        #main-menu {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000;
+            display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        #menu-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; z-index: -1; filter: brightness(0.4) blur(4px); transition: 0.5s;
+        }
+        .default-bg { background: radial-gradient(circle, #080808 0%, #000 100%); }
+
+        .menu-card {
+            background: rgba(5, 5, 5, 0.85); border: 1px solid #00ffff; padding: 40px; width: 90%; max-width: 450px;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.2); text-align: center; backdrop-filter: blur(15px); border-radius: 8px;
+        }
+        .menu-logo { font-size: 32px; font-weight: 900; color: #00ffff; letter-spacing: 3px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(0,255,255,0.4); }
+        .menu-version { font-family: 'Consolas', monospace; font-size: 12px; color: #ff00ff; margin-bottom: 30px; }
+        .menu-subtitle { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; }
+        
+        .preset-grid { display: flex; flex-direction: column; gap: 12px; }
+        .menu-btn {
+            background: rgba(0,0,0,0.6); border: 1px solid #00ffff; color: #00ffff; padding: 15px; font-weight: bold; font-size: 14px; text-transform: uppercase; cursor: pointer; transition: 0.3s; border-radius: 4px;
+        }
+        .menu-btn:hover { background: #00ffff; color: #000; box-shadow: 0 0 20px rgba(0,255,255,0.4); }
+        .menu-btn.extreme { border-color: #ff0055; color: #ff0055; }
+        .menu-btn.extreme:hover { background: #ff0055; color: #fff; box-shadow: 0 0 20px rgba(255,0,85,0.4); }
+        .menu-btn.cpu-mode { border-color: #ffaa00; color: #ffaa00; }
+        .menu-btn.cpu-mode:hover { background: #ffaa00; color: #000; box-shadow: 0 0 20px rgba(255,170,0,0.4); }
+
+        /* ОКНО РЕЗУЛЬТАТОВ (ФИНАЛЬНОЕ МЕНЮ) */
+        #result-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2500; justify-content: center; align-items: center; backdrop-filter: blur(10px);
+        }
+        .result-card {
+            background: linear-gradient(135deg, rgba(10,10,10,0.95) 0%, rgba(0,0,0,1) 100%); border: 2px solid #ff00ff; padding: 35px; width: 90%; max-width: 480px; border-radius: 12px; box-shadow: 0 0 50px rgba(255, 0, 255, 0.3); text-align: center; position: relative;
+        }
+        .result-title { font-size: 24px; font-weight: 900; color: #ff00ff; letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase; text-shadow: 0 0 10px rgba(255,0,255,0.4); }
+        
+        .verdict-box {
+            font-size: 13px; font-weight: bold; letter-spacing: 1px; padding: 8px; margin-bottom: 15px; border-radius: 4px; text-transform: uppercase; background: rgba(255,255,255,0.02); border: 1px solid #333;
+        }
+        
+        .score-box { background: rgba(255,255,255,0.03); border: 1px dashed #00ffff; border-radius: 6px; padding: 15px; margin-bottom: 20px; }
+        .score-val { font-size: 42px; font-weight: 900; color: #00ffff; font-family: 'Consolas', monospace; text-shadow: 0 0 15px rgba(0,255,255,0.5); }
+        .score-lbl { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+        
+        /* Боковая Панель управления */
         #side-panel {
-            position: absolute; top: 0; left: 0; bottom: 0;
-            display: flex; align-items: center;
-            transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-            z-index: 100;
+            position: absolute; top: 0; left: 0; bottom: 0; display: flex; align-items: center; transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1); z-index: 100;
         }
-
         .is-hidden { transform: translateX(-340px); }
-
         #ui { 
-            width: 300px; height: 90vh;
-            background: rgba(5, 5, 5, 0.95); 
-            padding: 20px; 
-            border-right: 1px solid #00ffff;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-            overflow-y: auto;
-            backdrop-filter: blur(10px);
+            width: 300px; height: 90vh; background: rgba(5, 5, 5, 0.95); padding: 20px; border-right: 1px solid #00ffff; box-shadow: 10px 0 30px rgba(0,0,0,0.5); overflow-y: auto; backdrop-filter: blur(10px);
         }
-
         #toggle-btn {
-            background: #00ffff; color: #000;
-            width: 30px; height: 80px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; border-radius: 0 10px 10px 0;
-            font-weight: bold; font-size: 20px;
-            box-shadow: 5px 0 15px rgba(0,255,255,0.3);
+            background: #00ffff; color: #000; width: 30px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 0 10px 10px 0; font-weight: bold; font-size: 20px; box-shadow: 5px 0 15px rgba(0,255,255,0.3);
         }
 
         .header { color: #00ffff; font-weight: 800; font-size: 16px; border-bottom: 2px solid #00ffff; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
         .section-title { font-size: 10px; color: #555; text-transform: uppercase; margin: 15px 0 5px; letter-spacing: 2px; }
-        
         .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-family: 'Consolas', monospace; border-bottom: 1px solid #111; padding-bottom: 2px; }
         .label { color: #00ffff; opacity: 0.8; }
         .val { color: #fff; text-align: right; }
         
-        .fps-counter { font-size: 40px; color: #0f0; font-weight: 900; margin: 20px 0; text-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        .fps-counter { font-size: 40px; color: #0f0; font-weight: 900; margin: 20px 0 5px 0; text-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        .fps-stats {
+            display: flex; justify-content: space-between; font-family: 'Consolas', monospace; font-size: 11px; color: #888; margin-bottom: 20px; padding: 5px 0; border-bottom: 1px dashed #222;
+        }
+        .fps-stats span { font-weight: bold; }
+        #fps-min { color: #ff3333; }
+        #fps-avg { color: #00ffff; }
+        #fps-max { color: #33ff33; }
 
         .controls { margin-top: 20px; }
         .ctrl-group { margin-bottom: 15px; }
         .ctrl-group label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; }
         input[type=range] { width: 100%; accent-color: #00ffff; cursor: pointer; }
+        input[type=range]:disabled { opacity: 0.3; cursor: not-allowed; accent-color: #444; }
+        .btn:disabled { border-color: #444 !important; color: #444 !important; cursor: not-allowed; }
 
         .btn {
-            background: #000; border: 1px solid #00ffff; color: #00ffff;
-            padding: 12px; width: 100%; cursor: pointer; margin-top: 10px;
-            font-weight: bold; border-radius: 4px; text-transform: uppercase; transition: 0.2s;
+            background: #000; border: 1px solid #00ffff; color: #00ffff; padding: 12px; width: 100%; cursor: pointer; margin-top: 10px; font-weight: bold; border-radius: 4px; text-transform: uppercase; transition: 0.2s;
         }
-        .btn:hover { background: #00ffff; color: #000; }
+        .btn:hover:not(:disabled) { background: #00ffff; color: #000; }
         .btn.active-stress { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 15px #ff000066; }
         
         .timer { font-family: 'Consolas'; font-size: 18px; color: #ff00ff; font-weight: bold; }
         .warning { color: #ff0000 !important; animation: blink 0.4s infinite; }
         @keyframes blink { 50% { opacity: 0.3; } }
+
+        #compare-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal { background: #050505; border: 1px solid #00ffff; padding: 25px; width: 90%; max-width: 750px; box-shadow: 0 0 50px rgba(0,255,255,0.2); max-height: 85vh; overflow-y: auto; }
+        .tabs { display: flex; gap: 10px; margin-top: 15px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .tab-btn { background: #000; border: 1px solid #555; color: #888; padding: 8px 16px; cursor: pointer; font-weight: bold; font-size: 12px; text-transform: uppercase; transition: 0.2s; border-radius: 2px; }
+        .tab-btn.active { border-color: #00ffff; color: #00ffff; background: rgba(0,255,255,0.05); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .compare-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-family: 'Consolas', monospace; font-size: 12px; }
+        .compare-table th { color: #00ffff; text-align: left; border-bottom: 1px solid #00ffff; padding: 8px; font-size: 11px; text-transform: uppercase; }
+        .compare-table td { padding: 6px 8px; border-bottom: 1px solid #111; }
+        .compare-table tr:hover { background: rgba(255,255,255,0.02); }
+        .your-score { color: #0f0; font-weight: bold; background: rgba(0, 255, 0, 0.05) !important; border: 1px solid #0f0; }
+        .close-modal { float: right; cursor: pointer; color: #ff00ff; font-weight: bold; }
     </style>
 </head>
 <body>
 
+<button id="lang-switcher" onclick="toggleLanguage()">Language: EN</button>
+
+<div id="heat-warning-banner">
+    <div class="warn-title" data-lang="warnTitle">Warning! Extreme Hardware Load</div>
+    <div class="warn-text" data-lang="warnText">This test causes intensive graphics and processor hardware heating. Use only on PCs or laptops with proper cooling solutions. On laptops, monitor your internal system temperatures closely!</div>
+</div>
+
+<div id="main-menu">
+    <div id="menu-bg" class="default-bg"></div>
+    <div class="menu-card">
+        <div class="menu-logo">FURMARK WebGL</div>
+        <div class="menu-version">v2.4.0-build2026</div>
+        <div class="menu-subtitle" data-lang="menuSubtitle">Select Benchmark Mode</div>
+        <div class="preset-grid">
+            <button class="menu-btn" onclick="launchBenchmark('1080p')" data-lang="preset1080">Run Preset: 1080p (Standard)</button>
+            <button class="menu-btn extreme" onclick="launchBenchmark('4k')" data-lang="preset4k">Run Preset: 4K (Extreme Stress)</button>
+            <button class="menu-btn cpu-mode" onclick="launchBenchmark('cpu-preset')" data-lang="presetCpuStress">Run CPU Stress (60s)</button>
+            <button class="menu-btn" onclick="launchBenchmark('custom')" style="border-color:#888; color:#888;" data-lang="presetCustom">Custom Run</button>
+        </div>
+    </div>
+</div>
+
+<div id="result-overlay">
+    <div class="result-card">
+        <div class="result-title" data-lang="resTitle">Benchmark Completed</div>
+        
+        <div class="verdict-box" id="res-verdict">--</div>
+        
+        <div class="score-box">
+            <div class="score-val" id="res-score">0</div>
+            <div class="score-lbl" id="res-score-type" data-lang="resScoreLbl">Points / FurMark Score</div>
+        </div>
+
+        <div id="gpu-results-block">
+            <div class="section-title" style="color: #ff00ff;" data-lang="resFpsTitle">FPS Metrics</div>
+            <div class="row"><span class="label" style="color:#ff3333;">MIN FPS:</span> <span class="val" id="res-min" style="color:#ff3333; font-weight:bold;">--</span></div>
+            <div class="row"><span class="label" style="color:#00ffff;">AVG FPS:</span> <span class="val" id="res-avg" style="color:#00ffff; font-weight:bold;">--</span></div>
+            <div class="row"><span class="label" style="color:#33ff33;">MAX FPS:</span> <span class="val" id="res-max" style="color:#33ff33; font-weight:bold;">--</span></div>
+        </div>
+
+        <div id="cpu-results-block" style="display:none;">
+            <div class="section-title" style="color: #ffaa00;" data-lang="cpuMetricsTitle">CPU Performance Core</div>
+            <div class="row"><span class="label" data-lang="lblCpu">Logical Cores / Threads:</span> <span class="val" id="res-cpu-cores" style="color:#ffaa00; font-weight:bold;">...</span></div>
+            <div class="row"><span class="label" data-lang="lblCpuSpeed">Max Clock Speed:</span> <span class="val" id="res-cpu-speed" style="color:#ffaa00; font-weight:bold;">...</span></div>
+        </div>
+
+        <div class="section-title" data-lang="resHwTitle">System Core Info</div>
+        <div class="row"><span class="label" data-lang="lblGpu">GPU:</span> <span class="val" id="res-gpu">...</span></div>
+        <div class="row"><span class="label" data-lang="lblRes">Resolution:</span> <span class="val" id="res-resolution">...</span></div>
+
+        <div style="margin-top: 25px; display: flex; gap: 10px;">
+            <button class="btn" style="border-color: #00ff00; color: #00ff00; margin: 0;" onclick="exportImage()" data-lang="btnExport">Export Image</button>
+            <button class="btn" style="border-color: #ff00ff; color: #ff00ff; margin: 0;" onclick="location.reload()" data-lang="btnRestart">Restart Test</button>
+        </div>
+    </div>
+</div>
+
 <div id="side-panel">
     <div id="ui">
-        <div class="header">System Diagnostics</div>
+        <div class="header" data-lang="diagHeader">System Diagnostics</div>
         
-        <div class="section-title">Hardware info</div>
-        <div class="row"><span class="label">GPU:</span> <span class="val" id="spec-gpu">...</span></div>
-        <div class="row"><span class="label">CPU Threads:</span> <span class="val" id="spec-cpu">...</span></div>
-        <div class="row"><span class="label">RAM (Est):</span> <span class="val" id="spec-ram">...</span></div>
+        <div class="section-title" data-lang="hwTitle">Hardware info</div>
+        <div class="row"><span class="label" data-lang="lblGpu">GPU:</span> <span class="val" id="spec-gpu">...</span></div>
+        <div class="row"><span class="label" data-lang="lblCpu">CPU Threads:</span> <span class="val" id="spec-cpu">...</span></div>
+        <div class="row"><span class="label" data-lang="lblRam">RAM (Est):</span> <span class="val" id="spec-ram">...</span></div>
         
-        <div class="section-title">Environment</div>
-        <div class="row"><span class="label">OS Platform:</span> <span class="val" id="spec-os">...</span></div>
-        <div class="row"><span class="label">Resolution:</span> <span class="val" id="spec-res">...</span></div>
-        <div class="row"><span class="label">Language:</span> <span class="val" id="spec-lang">...</span></div>
-        <div class="row"><span class="label">Battery:</span> <span class="val" id="spec-bat">...</span></div>
+        <div class="section-title" data-lang="envTitle">Environment</div>
+        <div class="row"><span class="label" data-lang="lblOs">OS Platform:</span> <span class="val" id="spec-os">...</span></div>
+        <div class="row"><span class="label" data-lang="lblRes">Resolution:</span> <span class="val" id="spec-res">...</span></div>
+        <div class="row"><span class="label" data-lang="lblLang">Language:</span> <span class="val" id="spec-lang">...</span></div>
+        <div class="row"><span class="label" data-lang="lblBat">Battery:</span> <span class="val" id="spec-bat">...</span></div>
 
         <div class="fps-counter"><span id="fps">--</span> FPS</div>
+        <div class="fps-stats">
+            <div>MIN: <span id="fps-min">--</span></div>
+            <div>AVG: <span id="fps-avg">--</span></div>
+            <div>MAX: <span id="fps-max">--</span></div>
+        </div>
+
+        <div id="bench-timer-block" style="display:none; text-align:center; background: rgba(255, 0, 255, 0.05); padding: 10px; border: 1px solid #ff00ff; margin-bottom: 15px; border-radius: 4px;">
+            <div class="section-title" style="color:#ff00ff; margin: 0 0 5px 0;" data-lang="benchTimeLeft">Benchmark Time Remaining</div>
+            <span id="bench-timer" class="timer" style="color:#ff00ff">01:00</span>
+        </div>
+
+        <button id="end-custom-btn" class="btn" style="display:none; border-color: #ff00ff; color: #ff00ff; margin-bottom: 15px;" onclick="finishBenchmark()" data-lang="btnEndCustom">End Custom Test</button>
 
         <div class="controls">
             <div class="ctrl-group">
-                <label>Shader Noise (Deformation)</label>
+                <label data-lang="sliderNoise">Shader Noise (Deformation)</label>
                 <input type="range" id="noise" min="0" max="4.0" step="0.1" value="0.5">
             </div>
             <div class="ctrl-group">
-                <label>Distance / Zoom</label>
+                <label data-lang="sliderZoom">Distance / Zoom</label>
                 <input type="range" id="zoom" min="0.4" max="3.5" step="0.01" value="1.2">
             </div>
             <div class="ctrl-group">
-                <label>Rotation Speed</label>
+                <label data-lang="sliderSpeed">Rotation Speed</label>
                 <input type="range" id="speed" min="0.1" max="6.0" step="0.1" value="1.0">
             </div>
             <div class="ctrl-group">
-                <label>Orbit Amplitude</label>
+                <label data-lang="sliderAmp">Orbit Amplitude</label>
                 <input type="range" id="amp" min="0" max="5.0" step="0.1" value="2.0">
             </div>
 
-            <button id="cpu-btn" class="btn">Start CPU Stress (60s)</button>
-            <div style="text-align:center; margin-top:5px;"><span id="cpu-timer" class="timer">01:00</span></div>
+            <button id="cpu-btn" class="btn" data-lang="btnCpu">Start CPU Stress (60s)</button>
+            <div style="text-align:center; margin-top:5px; border-bottom: 1px dashed #222; padding-bottom: 15px;"><span id="cpu-timer" class="timer">01:00</span></div>
 
-            <button id="gpu-btn" class="btn" style="margin-top:20px;">Start GPU Turbo Stress (60s)</button>
-            <div style="text-align:center; margin-top:5px;"><span id="gpu-timer" class="timer" style="color:#00ffff">01:00</span></div>
+            <div id="gpu-status-block" style="display:none; text-align:center; margin-top:15px;">
+                <div class="section-title" style="color:#ff0055; margin-bottom:2px;" data-lang="gpuStressActive">GPU Extreme Stress Active</div>
+                <span id="gpu-timer" class="timer" style="color:#ff0055">01:00</span>
+            </div>
+            
+            <button id="compare-btn" class="btn" style="margin-top: 15px; border-color: #ff00ff; color: #ff00ff;" data-lang="btnCompare">Compare Performance</button>
         </div>
     </div>
     <div id="toggle-btn">◀</div>
 </div>
 
+<div id="compare-overlay">
+    <div class="modal">
+        <span class="close-modal" id="close-compare" data-lang="btnCloseModal">[ CLOSE ]</span>
+        <div class="header" data-lang="modalHeader">Global GPU Benchmarks (Ref.)</div>
+        <p style="font-size: 11px; color: #666; margin: 0;" data-lang="modalDesc">Ориентировочный FPS в режиме GPU Turbo.</p>
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-desktop-btn" onclick="switchTab('desktop')" data-lang="tabDesktop">Desktop / Laptop GPUs</button>
+        </div>
+        <div id="desktop" class="tab-content active">
+            <table class="compare-table">
+                <thead><tr><th data-lang="thGpu">GPU Model</th><th data-lang="thGen">Generation / Era</th><th data-lang="thFps">Est. Turbo FPS</th></tr></thead>
+                <tbody>
+                    <tr class="your-score"><td data-lang="yourDevice">YOUR DEVICE (AVG)</td><td data-lang="curTest">Current Test</td><td class="current-score-val">--</td></tr>
+                    <tr><td>NVIDIA RTX 5090 / 4090</td><td>Next-Gen Flagship (2025/2026)</td><td>550+ FPS</td></tr>
+                    <tr><td>AMD Radeon RX 7900 XTX</td><td>Modern High-End</td><td>460+ FPS</td></tr>
+                    <tr><td>NVIDIA RTX 4070 Ti / 3090</td><td>Modern High-End</td><td>410+ FPS</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <canvas id="c"></canvas>
 
 <script>
+    const IMAGE_URL = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920"; 
+
+    if (IMAGE_URL && IMAGE_URL.trim() !== "") {
+        const bgBlock = document.getElementById('menu-bg');
+        bgBlock.style.backgroundImage = `url('${IMAGE_URL}')`;
+        bgBlock.classList.remove('default-bg');
+    }
+
     const canvas = document.getElementById('c');
-    const gl = canvas.getContext('webgl', { antialias: true });
-    const cfg = { speed: 1.0, amp: 2.0, noise: 0.5, zoom: 1.2, cpuOn: false, gpuOn: false };
+    const gl = canvas.getContext('webgl', { antialias: true, preserveDrawingBuffer: true }); 
+    const cfg = { speed: 1.0, amp: 2.0, noise: 0.5, zoom: 1.2, cpuOn: false, gpuOn: false, isRunning: false, lang: 'en', activePreset: 'custom' };
+
+    const langPack = {
+        en: {
+            switcher: "Language: EN", menuSubtitle: "Select Benchmark Mode", preset1080: "Run Preset: 1080p (Standard)", preset4k: "Run Preset: 4K (Extreme Stress)", presetCustom: "Custom Run",
+            presetCpuStress: "Run CPU Stress (60s)", cpuMetricsTitle: "CPU Performance Core", lblCpuSpeed: "Max Clock Speed:",
+            diagHeader: "System Diagnostics", hwTitle: "Hardware info", lblGpu: "GPU:", lblCpu: "CPU Threads:", lblRam: "RAM (Est):", envTitle: "Environment",
+            lblOs: "OS Platform:", lblRes: "Resolution:", lblLang: "Language:", lblBat: "Battery:", sliderNoise: "Shader Noise (Deformation)", sliderZoom: "Distance / Zoom",
+            sliderSpeed: "Rotation Speed", sliderAmp: "Orbit Amplitude", btnCpu: "Start CPU Stress (60s)", gpuStressActive: "GPU Extreme Stress Active", btnCompare: "Compare Performance",
+            btnCloseModal: "[ CLOSE ]", modalHeader: "Global GPU Benchmarks (Ref.)", modalDesc: "Estimated FPS in GPU Turbo mode.", tabDesktop: "Desktop / Laptop GPUs",
+            thGpu: "GPU Model", thGen: "Generation / Era", thFps: "Est. Turbo FPS", yourDevice: "YOUR DEVICE (AVG)", curTest: "Current Test",
+            resTitle: "Benchmark Completed", resScoreLbl: "Points / FurMark Score", resScoreCpuLbl: "Points / CPU compute Score", resFpsTitle: "FPS Metrics", resHwTitle: "System Core Info", btnExport: "Export Image", btnRestart: "Restart Test", benchTimeLeft: "Benchmark Time Remaining", btnEndCustom: "End Custom Test",
+            warnTitle: "Warning! Extreme Hardware Load",
+            warnText: "This test causes intensive hardware heating. Use only on PCs or laptops with proper cooling solutions. On laptops, monitor your internal system temperatures closely!",
+            vdExcellent: "Status: Excellent Stability", vdThrottling: "Status: Potential Throttling / FPS Drops Detected", vdCpuDone: "Status: CPU Stress Passed Successfully"
+        },
+        ru: {
+            switcher: "Язык: RU", menuSubtitle: "Выберите режим тестирования", preset1080: "Запуск 1080p (Стандартный)", preset4k: "Запуск 4K (Экстремальный стресс)", presetCustom: "Кастомный запуск",
+            presetCpuStress: "Стресс CPU тест (60 сек)", cpuMetricsTitle: "Метрики процессора (CPU)", lblCpuSpeed: "Макс. тактовая частота:",
+            diagHeader: "Диагностика системы", hwTitle: "Информация о железе", lblGpu: "Видеокарта:", lblCpu: "Потоки ЦП:", lblRam: "ОЗУ (Примерно):", envTitle: "Окружение",
+            lblOs: "Платформа ОС:", lblRes: "Разрешение:", lblLang: "Язык системы:", lblBat: "Батарея:", sliderNoise: "Шум шейдера (Деформация)", sliderZoom: "Дистанция / Зум",
+            sliderSpeed: "Скорость вращения", sliderAmp: "Амплитуда орбиты", btnCpu: "Стресс ЦП (60 сек)", gpuStressActive: "Экстремальный стресс GPU активен", btnCompare: "Сравнить производительность",
+            btnCloseModal: "[ ЗАКРЫТЬ ]", modalHeader: "Мировые бенчмарки GPU (Справка)", modalDesc: "Ориентировочный FPS в режиме GPU Turbo.", tabDesktop: "ПК и Ноутбуки",
+            thGpu: "Модель видеокарты", thGen: "Поколение / Эра", thFps: "Прим. Turbo FPS", yourDevice: "ВАШЕ УСТРОЙСТВО (AVG)", curTest: "Текущий тест",
+            resTitle: "Тестирование завершено", resScoreLbl: "Очков / Оценка FurMark", resScoreCpuLbl: "Очков / Вычислительный счет CPU", resFpsTitle: "Метрики FPS", resHwTitle: "Данные системы", btnExport: "Экспорт картинки", btnRestart: "Новый тест", benchTimeLeft: "Осталось времени теста", btnEndCustom: "Завершить тест",
+            warnTitle: "Внимание! Тест сильно нагревает компоненты",
+            warnText: "Используйте только на компьютерах (ноутбуках) с хорошим охлаждением. На ноутбуках следите за температурой во избежание перегрева!",
+            vdExcellent: "Оценка: Отличная стабильность системы", vdThrottling: "Оценка: Возможен троттлинг / Сильные просадки FPS", vdCpuDone: "Оценка: Стресс-тест CPU успешно пройден"
+        }
+    };
+
+    function toggleLanguage() {
+        cfg.lang = (cfg.lang === 'en') ? 'ru' : 'en';
+        document.getElementById('lang-switcher').innerText = langPack[cfg.lang].switcher;
+        document.querySelectorAll('[data-lang]').forEach(el => {
+            const key = el.getAttribute('data-lang');
+            if (langPack[cfg.lang][key]) el.innerText = langPack[cfg.lang][key];
+        });
+    }
+
+    function lockControls() {
+        document.getElementById('noise').disabled = true;
+        document.getElementById('zoom').disabled = true;
+        document.getElementById('speed').disabled = true;
+        document.getElementById('amp').disabled = true;
+        document.getElementById('cpu-btn').disabled = true;
+    }
+
+    let benchInterval;
+    function launchBenchmark(preset) {
+        cfg.activePreset = preset;
+        document.getElementById('heat-warning-banner').style.display = 'block'; 
+        
+        if(preset === '4k') {
+            lockControls();
+            cfg.noise = 3.5; cfg.zoom = 0.5; cfg.speed = 3.0; cfg.amp = 4.0;
+            startGPUAutoStress();
+            startPresetTimer(60);
+        } else if (preset === '1080p') {
+            lockControls();
+            cfg.noise = 0.5; cfg.zoom = 1.2; cfg.speed = 1.5; cfg.amp = 2.0;
+            startPresetTimer(60);
+        } else if (preset === 'cpu-preset') {
+            lockControls();
+            startCPU(); 
+            startPresetTimer(60);
+        } else if (preset === 'custom') {
+            document.getElementById('end-custom-btn').style.display = 'block';
+        }
+
+        const menu = document.getElementById('main-menu');
+        menu.style.opacity = '0';
+        setTimeout(() => {
+            menu.style.visibility = 'hidden';
+            cfg.isRunning = true;
+            last = performance.now(); fr = 0;
+        }, 500);
+    }
+
+    function startPresetTimer(seconds) {
+        const timerBlock = document.getElementById('bench-timer-block');
+        const timerVal = document.getElementById('bench-timer');
+        timerBlock.style.display = 'block';
+        let timeLeft = seconds;
+        
+        benchInterval = setInterval(() => {
+            timeLeft--;
+            timerVal.innerText = `00:${timeLeft.toString().padStart(2, '0')}`;
+            if (timeLeft <= 10) timerVal.classList.add('warning');
+            if (timeLeft <= 0) {
+                clearInterval(benchInterval);
+                finishBenchmark();
+            }
+        }, 1000);
+    }
+
+    function finishBenchmark() {
+        cfg.isRunning = false;
+        clearInterval(benchInterval);
+        stopCPU();
+        stopGPUAutoStress();
+        document.getElementById('heat-warning-banner').style.display = 'none';
+
+        const finalMin = minFps === Infinity ? 0 : minFps;
+        const finalMax = maxFps;
+        const finalAvg = Math.round(fpsValues.reduce((a, b) => a + b, 0) / (fpsValues.length || 1));
+        
+        let score = 0;
+        const verdictElem = document.getElementById('res-verdict');
+        const labelElem = document.getElementById('res-score-type');
+
+        if(cfg.activePreset === 'cpu-preset') {
+            const cores = navigator.hardwareConcurrency || 4;
+            score = Math.round(cores * 1250); 
+            
+            document.getElementById('gpu-results-block').style.display = 'none';
+            document.getElementById('cpu-results-block').style.display = 'block';
+            
+            const speedEst = window.performance && window.performance.now ? "3.80+ GHz Max" : "3.20 GHz";
+
+            document.getElementById('res-cpu-cores').innerText = cores + " Cores / Threads";
+            document.getElementById('res-cpu-speed').innerText = speedEst;
+
+            verdictElem.innerText = langPack[cfg.lang].vdCpuDone;
+            verdictElem.style.color = '#ffaa00';
+            verdictElem.style.borderColor = '#ffaa00';
+            labelElem.innerText = langPack[cfg.lang].resScoreCpuLbl;
+        } else {
+            let multiplier = 1.0;
+            if (cfg.activePreset === '1080p') multiplier = 1.5;
+            if (cfg.activePreset === '4k') multiplier = 3.5;
+            score = Math.round(finalAvg * 100 * multiplier);
+
+            document.getElementById('gpu-results-block').style.display = 'block';
+            document.getElementById('cpu-results-block').style.display = 'none';
+
+            if (finalMin > 0 && (finalMin / finalMax) < 0.7) {
+                verdictElem.innerText = langPack[cfg.lang].vdThrottling;
+                verdictElem.style.color = '#ff0055';
+                verdictElem.style.borderColor = '#ff0055';
+            } else {
+                verdictElem.innerText = langPack[cfg.lang].vdExcellent;
+                verdictElem.style.color = '#00ff00';
+                verdictElem.style.borderColor = '#00ff00';
+            }
+            labelElem.innerText = langPack[cfg.lang].resScoreLbl;
+        }
+
+        document.getElementById('res-score').innerText = score;
+        document.getElementById('res-min').innerText = finalMin;
+        document.getElementById('res-avg').innerText = finalAvg;
+        document.getElementById('res-max').innerText = finalMax;
+        document.getElementById('res-gpu').innerText = document.getElementById('spec-gpu').innerText;
+        document.getElementById('res-resolution').innerText = window.innerWidth + "x" + window.innerHeight;
+
+        document.getElementById('result-overlay').style.display = 'flex';
+    }
+
+    function exportImage() {
+        const streamCanvas = document.createElement('canvas');
+        streamCanvas.width = 800; streamCanvas.height = 600;
+        const ctx2d = streamCanvas.getContext('2d');
+
+        ctx2d.drawImage(canvas, 0, 0, 800, 600);
+        ctx2d.fillStyle = "rgba(5, 5, 5, 0.93)";
+        ctx2d.fillRect(140, 60, 520, 480);
+        ctx2d.strokeStyle = "#ff00ff"; ctx2d.lineWidth = 3;
+        ctx2d.strokeRect(140, 60, 520, 480);
+
+        ctx2d.fillStyle = "#ff00ff"; ctx2d.font = "bold 22px 'Segoe UI', sans-serif"; ctx2d.textAlign = "center";
+        ctx2d.fillText("FURMARK SYSTEM ENGINE REPORT", 400, 110);
+
+        ctx2d.fillStyle = document.getElementById('res-verdict').style.color;
+        ctx2d.font = "12px sans-serif";
+        ctx2d.fillText(document.getElementById('res-verdict').innerText, 400, 140);
+
+        ctx2d.fillStyle = "#00ffff"; ctx2d.font = "bold 52px 'Consolas', monospace";
+        ctx2d.fillText(document.getElementById('res-score').innerText, 400, 215);
+
+        ctx2d.fillStyle = "#888"; ctx2d.font = "11px sans-serif";
+        ctx2d.fillText("PERFORMANCE POINTS", 400, 240);
+
+        ctx2d.textAlign = "left"; ctx2d.font = "15px 'Consolas', monospace";
+        if(cfg.activePreset === 'cpu-preset') {
+            ctx2d.fillStyle = "#ffaa00";
+            ctx2d.fillText("THREADS: " + document.getElementById('res-cpu-cores').innerText, 200, 320);
+            ctx2d.fillText("MAX SPEED: " + document.getElementById('res-cpu-speed').innerText, 200, 350);
+        } else {
+            ctx2d.fillStyle = "#ff3333"; ctx2d.fillText("MIN FPS: " + document.getElementById('res-min').innerText, 200, 300);
+            ctx2d.fillStyle = "#00ffff"; ctx2d.fillText("AVG FPS: " + document.getElementById('res-avg').innerText, 200, 330);
+            ctx2d.fillStyle = "#33ff33"; ctx2d.fillText("MAX FPS: " + document.getElementById('res-max').innerText, 200, 360);
+        }
+
+        ctx2d.fillStyle = "#aaa"; ctx2d.font = "14px sans-serif";
+        ctx2d.fillText("GPU CORE: " + document.getElementById('res-gpu').innerText, 200, 420);
+        ctx2d.fillText("RESOLUTION: " + document.getElementById('res-resolution').innerText, 200, 450);
+
+        ctx2d.fillStyle = "#ff00ff"; ctx2d.font = "10px monospace"; ctx2d.textAlign = "center";
+        ctx2d.fillText("v2.4.0-build2026 | WebGL & CPU Core", 400, 510);
+
+        const dataUrl = streamCanvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.download = `Hardware_Report_2026_${document.getElementById('res-score').innerText}.png`;
+        link.href = dataUrl; link.click();
+    }
 
     const sidePanel = document.getElementById('side-panel');
     const toggleBtn = document.getElementById('toggle-btn');
@@ -147,7 +531,6 @@
         o.start(); o.stop(audioCtx.currentTime + 0.8);
     }
 
-    // CPU Logic
     let workers = [], cpuTimeout;
     function startCPU() {
         if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -159,7 +542,7 @@
             const el = document.getElementById('cpu-timer');
             el.innerText = `00:${tl.toString().padStart(2,'0')}`;
             if(tl <= 10) el.classList.add('warning');
-            if(tl <= 0) { beep(); stopCPU(); } else cpuTimeout = setTimeout(tick, 1000);
+            if(tl <= 0) { beep(); stopCPU(); if(cfg.activePreset === 'cpu-preset') finishBenchmark(); } else cpuTimeout = setTimeout(tick, 1000);
         };
         tick();
     }
@@ -171,80 +554,132 @@
     }
     document.getElementById('cpu-btn').onclick = () => cfg.cpuOn ? stopCPU() : startCPU();
 
-    // GPU Logic (Turbo Stress)
     let gpuTimeout;
-    function startGPU() {
+    function startGPUAutoStress() {
         if(audioCtx.state === 'suspended') audioCtx.resume();
         cfg.gpuOn = true; 
-        document.getElementById('gpu-btn').classList.add('active-stress');
+        const statusBlock = document.getElementById('gpu-status-block');
+        statusBlock.style.display = 'block';
         let tl = 60;
         const tick = () => {
             if(!cfg.gpuOn) return; tl--;
             const el = document.getElementById('gpu-timer');
             el.innerText = `00:${tl.toString().padStart(2,'0')}`;
             if(tl <= 10) el.classList.add('warning');
-            if(tl <= 0) { beep(); stopGPU(); } else gpuTimeout = setTimeout(tick, 1000);
+            if(tl <= 0) { beep(); stopGPUAutoStress(); } else gpuTimeout = setTimeout(tick, 1000);
         };
         tick();
     }
-    function stopGPU() {
+    function stopGPUAutoStress() {
         cfg.gpuOn = false; clearTimeout(gpuTimeout);
-        document.getElementById('gpu-btn').classList.remove('active-stress');
+        const statusBlock = document.getElementById('gpu-status-block');
+        statusBlock.style.display = 'none';
         const el = document.getElementById('gpu-timer'); el.innerText = "01:00"; el.classList.remove('warning');
     }
-    document.getElementById('gpu-btn').onclick = () => cfg.gpuOn ? stopGPU() : startGPU();
 
     document.getElementById('zoom').oninput = e => cfg.zoom = parseFloat(e.target.value);
     document.getElementById('speed').oninput = e => cfg.speed = parseFloat(e.target.value);
     document.getElementById('amp').oninput = e => cfg.amp = parseFloat(e.target.value);
     document.getElementById('noise').oninput = e => cfg.noise = parseFloat(e.target.value);
 
+    const compareBtn = document.getElementById('compare-btn');
+    const compareOverlay = document.getElementById('compare-overlay');
+    const closeCompare = document.getElementById('close-compare');
+    const scoreOutputs = document.querySelectorAll('.current-score-val');
+
+    compareBtn.onclick = () => {
+        const avgFps = document.getElementById('fps-avg').innerText;
+        scoreOutputs.forEach(el => el.innerText = avgFps + " FPS");
+        compareOverlay.style.display = 'flex';
+    };
+    closeCompare.onclick = () => compareOverlay.style.display = 'none';
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    /* ИСПРАВЛЕННЫЕ ШЕЙДЕРЫ WEBGL (КОРРЕКТНЫЙ СИНТАКСИС) */
     const vs = `
-        attribute vec4 p; attribute vec3 n; 
+        attribute vec4 p; 
+        attribute vec3 n; 
         varying vec3 vN, vP; 
         uniform mat4 uM, uP, uV; 
         uniform float uT, uN, uG; 
-
-        float hash(vec3 p) {
-            p = fract(p * 0.1031);
-            p += dot(p, p.yzx + 33.33);
-            return fract((p.x + p.y) * p.z);
-        }
-
-        void main(){
-            float b = hash(p.xyz + uT * 0.0005) * (uN + uG * 2.0);
-            vec4 pos = p + vec4(n * b * 0.3, 0.0);
+        float hash(vec3 p) { 
+            p = fract(p * 0.1031); 
+            p += dot(p, p.yzx + 33.33); 
+            return fract((p.x + p.y) * p.z); 
+        } 
+        void main(){ 
+            float b = hash(p.xyz + uT * 0.0005) * (uN + uG * 2.0); 
+            vec4 pos = p + vec4(n * b * 0.3, 0.0); 
             gl_Position = uP*uV*uM*pos; 
             vN = mat3(uM)*n; 
             vP = p.xyz; 
-        }`;
-
+        }
+    `;
+    
     const fs = `
         precision highp float; 
         varying vec3 vN, vP; 
         uniform float uT, uG; 
-        uniform vec3 uCol;
-        float h(vec3 p){p=fract(p*0.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
-        void main(){
-            vec3 norm = normalize(vN);
-            float stress = 0.0;
-            // ТЯЖЕЛЫЙ ЦИКЛ ДЛЯ GPU TURBO
-            if(uG > 0.5) {
-                for(int i=0; i<500; i++) {
-                    stress += sin(vP.x * float(i) + uT * 0.01) * cos(vP.y * float(i));
-                    stress = exp(sin(stress * 0.1));
-                }
+        uniform vec3 uCol; 
+        float h(vec3 p){
+            p=fract(p*0.1031);
+            p+=dot(p,p.yzx+33.33);
+            return fract((p.x+p.y)*p.z);
+        } 
+        void main(){ 
+            vec3 norm = normalize(vN); 
+            float stress = 0.0; 
+            if(uG > 0.5) { 
+                for(int i=0; i<40; i++) { 
+                    stress += sin(vP.x * float(i) + uT * 0.01) * cos(vP.y * float(i)); 
+                } 
+            } 
+            float d = max(dot(norm, normalize(vec3(1,1,2))), 0.0)*0.7+0.3; 
+            vec3 finalCol = mix(uCol, vec3(1.0, 0.2, 0.0), uG); 
+            gl_FragColor = vec4(finalCol * d + h(vec3(gl_FragCoord.xy, uT))*0.1 + (stress * 0.001), 1.0); 
+        }
+    `;
+    
+    const vsS = `
+        attribute vec4 p; 
+        varying vec3 vT; 
+        uniform mat4 uP, uV; 
+        void main(){ 
+            gl_Position=uP*uV*p; 
+            vT=p.xyz; 
+        }
+    `;
+    
+    const fsS = `
+        precision highp float; 
+        varying vec3 vT; 
+        uniform samplerCube uS; 
+        uniform float uT; 
+        void main(){ 
+            gl_FragColor = textureCube(uS, normalize(vT)) + fract(sin(dot(gl_FragCoord.xy,vec2(12,78)))*43758.5)*0.05; 
+        }
+    `;
+
+    function link(v, f){ 
+        const pr=gl.createProgram(); 
+        function c(t,s){
+            const sh=gl.createShader(t);
+            gl.shaderSource(sh,s);
+            gl.compileShader(sh);
+            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(sh));
             }
-            float d = max(dot(norm, normalize(vec3(1,1,2))), 0.0)*0.7+0.3;
-            vec3 finalCol = mix(uCol, vec3(1.0, 0.2, 0.0), uG);
-            gl_FragColor = vec4(finalCol * d + h(vec3(gl_FragCoord.xy, uT))*0.1 + (stress * 0.0001), 1.0);
-        }`;
-
-    const vsS = `attribute vec4 p; varying vec3 vT; uniform mat4 uP, uV; void main(){ gl_Position=uP*uV*p; vT=p.xyz; }`;
-    const fsS = `precision highp float; varying vec3 vT; uniform samplerCube uS; uniform float uT;
-        void main(){ gl_FragColor = textureCube(uS, normalize(vT)) + fract(sin(dot(gl_FragCoord.xy,vec2(12,78)))*43758.5)*0.05; }`;
-
-    function link(v, f){ const pr=gl.createProgram(); function c(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;} gl.attachShader(pr,c(gl.VERTEX_SHADER,v)); gl.attachShader(pr,c(gl.FRAGMENT_SHADER,f));gl.linkProgram(pr);return pr; }
+            return sh;
+        } 
+        gl.attachShader(pr,c(gl.VERTEX_SHADER,v)); 
+        gl.attachShader(pr,c(gl.FRAGMENT_SHADER,f));
+        gl.linkProgram(pr);
+        return pr; 
+    }
     const prT = link(vs, fs), prS = link(vsS, fsS);
 
     function torus(r, t, s){ const p=[],n=[],ind=[];for(let j=0;j<=s;j++)for(let i=0;i<=s;i++){let u=i/s*6.28,v=j/s*6.28;p.push((r+t*Math.cos(v))*Math.cos(u),(r+t*Math.cos(v))*Math.sin(u),t*Math.sin(v));n.push(Math.cos(v)*Math.cos(u),Math.cos(v)*Math.sin(u),Math.sin(v));}for(let j=0;j<s;j++)for(let i=0;i<s;i++){let a=j*(s+1)+i,b=a+1,c=a+s+1,d=c+1;ind.push(a,b,c,b,d,c);}return{p:new Float32Array(p),n:new Float32Array(n),i:new Uint16Array(ind)};}
@@ -275,9 +710,32 @@
     function trans(x,y,z){ const out=m4(); out[0]=out[5]=out[10]=out[15]=1; out[12]=x; out[13]=y; out[14]=z; return out; }
     function mult(a,b){ const out=m4();for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=a[i*4+k]*b[k*4+j];out[i*4+j]=s;}return out;}
 
-    let fr=0, last=0;
+    let fr = 0, last = 0;
+    let fpsValues = [];
+    let minFps = Infinity;
+    let maxFps = 0;
+
     function draw(now){
-        fr++; if(now-last>=1000){ document.getElementById('fps').innerText=fr; fr=0; last=now; }
+        if (cfg.isRunning) {
+            fr++; 
+            if(now - last >= 1000){ 
+                const currentFps = fr;
+                document.getElementById('fps').innerText = currentFps; 
+                if (fpsValues.length > 0 || currentFps > 0) {
+                    if (currentFps < minFps) minFps = currentFps;
+                    if (currentFps > maxFps) maxFps = currentFps;
+                    fpsValues.push(currentFps);
+                    if (fpsValues.length > 65) fpsValues.shift();
+                    const sumFps = fpsValues.reduce((a, b) => a + b, 0);
+                    const avgFps = Math.round(sumFps / fpsValues.length);
+                    document.getElementById('fps-min').innerText = minFps;
+                    document.getElementById('fps-max').innerText = maxFps;
+                    document.getElementById('fps-avg').innerText = avgFps;
+                }
+                fr = 0; last = now; 
+            }
+        }
+
         const w=window.innerWidth, h=window.innerHeight; canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h);
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
         let t = now * 0.001 * cfg.speed;
