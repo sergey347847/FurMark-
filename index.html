@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FurMark (ВЕБ ВЕРСИЯ)</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        
+        #side-panel {
+            position: absolute; top: 0; left: 0; bottom: 0;
+            display: flex; align-items: center;
+            transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 100;
+        }
+
+        .is-hidden { transform: translateX(-340px); }
+
+        #ui { 
+            width: 300px; height: 90vh;
+            background: rgba(5, 5, 5, 0.95); 
+            padding: 20px; 
+            border-right: 1px solid #00ffff;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        #toggle-btn {
+            background: #00ffff; color: #000;
+            width: 30px; height: 80px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border-radius: 0 10px 10px 0;
+            font-weight: bold; font-size: 20px;
+            box-shadow: 5px 0 15px rgba(0,255,255,0.3);
+        }
+
+        .header { color: #00ffff; font-weight: 800; font-size: 16px; border-bottom: 2px solid #00ffff; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .section-title { font-size: 10px; color: #555; text-transform: uppercase; margin: 15px 0 5px; letter-spacing: 2px; }
+        
+        .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-family: 'Consolas', monospace; border-bottom: 1px solid #111; padding-bottom: 2px; }
+        .label { color: #00ffff; opacity: 0.8; }
+        .val { color: #fff; text-align: right; }
+        
+        .fps-counter { font-size: 40px; color: #0f0; font-weight: 900; margin: 20px 0; text-shadow: 0 0 10px rgba(0,255,0,0.3); }
+
+        .controls { margin-top: 20px; }
+        .ctrl-group { margin-bottom: 15px; }
+        .ctrl-group label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; }
+        input[type=range] { width: 100%; accent-color: #00ffff; cursor: pointer; }
+
+        .btn {
+            background: #000; border: 1px solid #00ffff; color: #00ffff;
+            padding: 12px; width: 100%; cursor: pointer; margin-top: 10px;
+            font-weight: bold; border-radius: 4px; text-transform: uppercase; transition: 0.2s;
+        }
+        .btn:hover { background: #00ffff; color: #000; }
+        .btn.active-stress { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 15px #ff000066; }
+        
+        .timer { font-family: 'Consolas'; font-size: 18px; color: #ff00ff; font-weight: bold; }
+        .warning { color: #ff0000 !important; animation: blink 0.4s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+<div id="side-panel">
+    <div id="ui">
+        <div class="header">System Diagnostics</div>
+        
+        <div class="section-title">Hardware info</div>
+        <div class="row"><span class="label">GPU:</span> <span class="val" id="spec-gpu">...</span></div>
+        <div class="row"><span class="label">CPU Threads:</span> <span class="val" id="spec-cpu">...</span></div>
+        <div class="row"><span class="label">RAM (Est):</span> <span class="val" id="spec-ram">...</span></div>
+        
+        <div class="section-title">Environment</div>
+        <div class="row"><span class="label">OS Platform:</span> <span class="val" id="spec-os">...</span></div>
+        <div class="row"><span class="label">Resolution:</span> <span class="val" id="spec-res">...</span></div>
+        <div class="row"><span class="label">Language:</span> <span class="val" id="spec-lang">...</span></div>
+        <div class="row"><span class="label">Battery:</span> <span class="val" id="spec-bat">...</span></div>
+
+        <div class="fps-counter"><span id="fps">--</span> FPS</div>
+
+        <div class="controls">
+            <div class="ctrl-group">
+                <label>Shader Noise (Deformation)</label>
+                <input type="range" id="noise" min="0" max="4.0" step="0.1" value="0.5">
+            </div>
+            <div class="ctrl-group">
+                <label>Distance / Zoom</label>
+                <input type="range" id="zoom" min="0.4" max="3.5" step="0.01" value="1.2">
+            </div>
+            <div class="ctrl-group">
+                <label>Rotation Speed</label>
+                <input type="range" id="speed" min="0.1" max="6.0" step="0.1" value="1.0">
+            </div>
+            <div class="ctrl-group">
+                <label>Orbit Amplitude</label>
+                <input type="range" id="amp" min="0" max="5.0" step="0.1" value="2.0">
+            </div>
+
+            <button id="cpu-btn" class="btn">Start CPU Stress (60s)</button>
+            <div style="text-align:center; margin-top:5px;"><span id="cpu-timer" class="timer">01:00</span></div>
+
+            <button id="gpu-btn" class="btn" style="margin-top:20px;">Start GPU Turbo Stress (60s)</button>
+            <div style="text-align:center; margin-top:5px;"><span id="gpu-timer" class="timer" style="color:#00ffff">01:00</span></div>
+        </div>
+    </div>
+    <div id="toggle-btn">◀</div>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+    const canvas = document.getElementById('c');
+    const gl = canvas.getContext('webgl', { antialias: true });
+    const cfg = { speed: 1.0, amp: 2.0, noise: 0.5, zoom: 1.2, cpuOn: false, gpuOn: false };
+
+    const sidePanel = document.getElementById('side-panel');
+    const toggleBtn = document.getElementById('toggle-btn');
+    toggleBtn.onclick = () => {
+        sidePanel.classList.toggle('is-hidden');
+        toggleBtn.innerText = sidePanel.classList.contains('is-hidden') ? '▶' : '◀';
+    };
+
+    const getSpecs = async () => {
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        document.getElementById('spec-gpu').innerText = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL).split('/')[0].replace('ANGLE (','').substring(0,18) : "Generic";
+        document.getElementById('spec-cpu').innerText = navigator.hardwareConcurrency + " Cores";
+        document.getElementById('spec-ram').innerText = (navigator.deviceMemory || "8+") + " GB";
+        document.getElementById('spec-os').innerText = navigator.platform;
+        document.getElementById('spec-res').innerText = window.screen.width + "x" + window.screen.height;
+        document.getElementById('spec-lang').innerText = navigator.language.toUpperCase();
+        try {
+            const bat = await navigator.getBattery();
+            document.getElementById('spec-bat').innerText = Math.round(bat.level * 100) + "% " + (bat.charging ? "⚡" : "🔋");
+        } catch(e) { document.getElementById('spec-bat').innerText = "N/A"; }
+    };
+    getSpecs();
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep() {
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.frequency.setValueAtTime(800, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+        o.start(); o.stop(audioCtx.currentTime + 0.8);
+    }
+
+    // CPU Logic
+    let workers = [], cpuTimeout;
+    function startCPU() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        cfg.cpuOn = true; document.getElementById('cpu-btn').classList.add('active-stress');
+        for(let i=0; i<navigator.hardwareConcurrency; i++) workers.push(new Worker(URL.createObjectURL(new Blob(['while(true){Math.random()}']))));
+        let tl = 60;
+        const tick = () => {
+            if(!cfg.cpuOn) return; tl--;
+            const el = document.getElementById('cpu-timer');
+            el.innerText = `00:${tl.toString().padStart(2,'0')}`;
+            if(tl <= 10) el.classList.add('warning');
+            if(tl <= 0) { beep(); stopCPU(); } else cpuTimeout = setTimeout(tick, 1000);
+        };
+        tick();
+    }
+    function stopCPU() {
+        cfg.cpuOn = false; clearTimeout(cpuTimeout);
+        workers.forEach(w => w.terminate()); workers = [];
+        document.getElementById('cpu-btn').classList.remove('active-stress');
+        const el = document.getElementById('cpu-timer'); el.innerText = "01:00"; el.classList.remove('warning');
+    }
+    document.getElementById('cpu-btn').onclick = () => cfg.cpuOn ? stopCPU() : startCPU();
+
+    // GPU Logic (Turbo Stress)
+    let gpuTimeout;
+    function startGPU() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        cfg.gpuOn = true; 
+        document.getElementById('gpu-btn').classList.add('active-stress');
+        let tl = 60;
+        const tick = () => {
+            if(!cfg.gpuOn) return; tl--;
+            const el = document.getElementById('gpu-timer');
+            el.innerText = `00:${tl.toString().padStart(2,'0')}`;
+            if(tl <= 10) el.classList.add('warning');
+            if(tl <= 0) { beep(); stopGPU(); } else gpuTimeout = setTimeout(tick, 1000);
+        };
+        tick();
+    }
+    function stopGPU() {
+        cfg.gpuOn = false; clearTimeout(gpuTimeout);
+        document.getElementById('gpu-btn').classList.remove('active-stress');
+        const el = document.getElementById('gpu-timer'); el.innerText = "01:00"; el.classList.remove('warning');
+    }
+    document.getElementById('gpu-btn').onclick = () => cfg.gpuOn ? stopGPU() : startGPU();
+
+    document.getElementById('zoom').oninput = e => cfg.zoom = parseFloat(e.target.value);
+    document.getElementById('speed').oninput = e => cfg.speed = parseFloat(e.target.value);
+    document.getElementById('amp').oninput = e => cfg.amp = parseFloat(e.target.value);
+    document.getElementById('noise').oninput = e => cfg.noise = parseFloat(e.target.value);
+
+    const vs = `
+        attribute vec4 p; attribute vec3 n; 
+        varying vec3 vN, vP; 
+        uniform mat4 uM, uP, uV; 
+        uniform float uT, uN, uG; 
+
+        float hash(vec3 p) {
+            p = fract(p * 0.1031);
+            p += dot(p, p.yzx + 33.33);
+            return fract((p.x + p.y) * p.z);
+        }
+
+        void main(){
+            float b = hash(p.xyz + uT * 0.0005) * (uN + uG * 2.0);
+            vec4 pos = p + vec4(n * b * 0.3, 0.0);
+            gl_Position = uP*uV*uM*pos; 
+            vN = mat3(uM)*n; 
+            vP = p.xyz; 
+        }`;
+
+    const fs = `
+        precision highp float; 
+        varying vec3 vN, vP; 
+        uniform float uT, uG; 
+        uniform vec3 uCol;
+        float h(vec3 p){p=fract(p*0.1031);p+=dot(p,p.yzx+33.33);return fract((p.x+p.y)*p.z);}
+        void main(){
+            vec3 norm = normalize(vN);
+            float stress = 0.0;
+            // ТЯЖЕЛЫЙ ЦИКЛ ДЛЯ GPU TURBO
+            if(uG > 0.5) {
+                for(int i=0; i<500; i++) {
+                    stress += sin(vP.x * float(i) + uT * 0.01) * cos(vP.y * float(i));
+                    stress = exp(sin(stress * 0.1));
+                }
+            }
+            float d = max(dot(norm, normalize(vec3(1,1,2))), 0.0)*0.7+0.3;
+            vec3 finalCol = mix(uCol, vec3(1.0, 0.2, 0.0), uG);
+            gl_FragColor = vec4(finalCol * d + h(vec3(gl_FragCoord.xy, uT))*0.1 + (stress * 0.0001), 1.0);
+        }`;
+
+    const vsS = `attribute vec4 p; varying vec3 vT; uniform mat4 uP, uV; void main(){ gl_Position=uP*uV*p; vT=p.xyz; }`;
+    const fsS = `precision highp float; varying vec3 vT; uniform samplerCube uS; uniform float uT;
+        void main(){ gl_FragColor = textureCube(uS, normalize(vT)) + fract(sin(dot(gl_FragCoord.xy,vec2(12,78)))*43758.5)*0.05; }`;
+
+    function link(v, f){ const pr=gl.createProgram(); function c(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;} gl.attachShader(pr,c(gl.VERTEX_SHADER,v)); gl.attachShader(pr,c(gl.FRAGMENT_SHADER,f));gl.linkProgram(pr);return pr; }
+    const prT = link(vs, fs), prS = link(vsS, fsS);
+
+    function torus(r, t, s){ const p=[],n=[],ind=[];for(let j=0;j<=s;j++)for(let i=0;i<=s;i++){let u=i/s*6.28,v=j/s*6.28;p.push((r+t*Math.cos(v))*Math.cos(u),(r+t*Math.cos(v))*Math.sin(u),t*Math.sin(v));n.push(Math.cos(v)*Math.cos(u),Math.cos(v)*Math.sin(u),Math.sin(v));}for(let j=0;j<s;j++)for(let i=0;i<s;i++){let a=j*(s+1)+i,b=a+1,c=a+s+1,d=c+1;ind.push(a,b,c,b,d,c);}return{p:new Float32Array(p),n:new Float32Array(n),i:new Uint16Array(ind)};}
+    const tD = torus(1.0, 0.4, 75);
+    const skyC = new Float32Array([-1,-1,-1, 1,-1,-1, 1,1,-1, -1,1,-1, -1,-1,1, 1,-1,1, 1,1,1, -1,1,1]);
+    const skyI = new Uint16Array([0,1,2,0,2,3, 4,5,6,4,6,7, 3,2,6,3,6,7, 0,1,5,0,5,4, 1,2,6,1,6,5, 0,3,7,0,7,4]);
+
+    const sPB=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,sPB); gl.bufferData(gl.ARRAY_BUFFER,skyC,gl.STATIC_DRAW);
+    const sIB=gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,sIB); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,skyI,gl.STATIC_DRAW);
+    const tPB=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,tPB); gl.bufferData(gl.ARRAY_BUFFER,tD.p,gl.STATIC_DRAW);
+    const tNB=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,tNB); gl.bufferData(gl.ARRAY_BUFFER,tD.n,gl.STATIC_DRAW);
+    const tIB=gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,tIB); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,tD.i,gl.STATIC_DRAW);
+
+    const skyT = gl.createTexture(); gl.bindTexture(gl.TEXTURE_CUBE_MAP, skyT);
+    const ctx = document.createElement('canvas').getContext('2d'); ctx.canvas.width=ctx.canvas.height=512;
+    const tg = [gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X, gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z];
+    for(let i=0; i<6; i++){
+        ctx.fillStyle='#000'; ctx.fillRect(0,0,512,512);
+        ctx.fillStyle='#fff'; for(let j=0; j<800; j++) ctx.fillRect(Math.random()*512, Math.random()*512, 1.5, 1.5);
+        gl.texImage2D(tg[i], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, ctx.canvas);
+    }
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+
+    function m4(){return new Float32Array(16);}
+    function perspective(f, a, n, fr){ const out=m4(); out[0]=f/a; out[5]=f; out[10]=(fr+n)/(n-fr); out[11]=-1; out[14]=(2*fr*n)/(n-fr); return out; }
+    function rotY(a){ const out=m4(); let s=Math.sin(a),c=Math.cos(a); out[0]=out[10]=c; out[5]=out[15]=1; out[2]=-s; out[8]=s; return out; }
+    function rotX(a){ const out=m4(); let s=Math.sin(a),c=Math.cos(a); out[0]=out[15]=1; out[5]=out[10]=c; out[6]=s; out[9]=-s; return out; }
+    function trans(x,y,z){ const out=m4(); out[0]=out[5]=out[10]=out[15]=1; out[12]=x; out[13]=y; out[14]=z; return out; }
+    function mult(a,b){ const out=m4();for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=a[i*4+k]*b[k*4+j];out[i*4+j]=s;}return out;}
+
+    let fr=0, last=0;
+    function draw(now){
+        fr++; if(now-last>=1000){ document.getElementById('fps').innerText=fr; fr=0; last=now; }
+        const w=window.innerWidth, h=window.innerHeight; canvas.width=w; canvas.height=h; gl.viewport(0,0,w,h);
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+        let t = now * 0.001 * cfg.speed;
+        const matP = perspective(cfg.zoom, w/h, 0.1, 100);
+        const yPos = Math.sin(t) * cfg.amp;
+
+        gl.disable(gl.DEPTH_TEST); gl.useProgram(prS);
+        gl.uniformMatrix4fv(gl.getUniformLocation(prS,"uP"), false, matP);
+        gl.uniformMatrix4fv(gl.getUniformLocation(prS,"uV"), false, rotY(t*0.05));
+        gl.bindBuffer(gl.ARRAY_BUFFER, sPB); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sIB); gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+
+        gl.enable(gl.DEPTH_TEST); gl.useProgram(prT);
+        gl.uniform3fv(gl.getUniformLocation(prT,"uCol"), new Float32Array([0,1,1]));
+        gl.uniform1f(gl.getUniformLocation(prT,"uT"), now);
+        gl.uniform1f(gl.getUniformLocation(prT,"uN"), cfg.noise);
+        gl.uniform1f(gl.getUniformLocation(prT,"uG"), cfg.gpuOn ? 1.0 : 0.0);
+        gl.uniformMatrix4fv(gl.getUniformLocation(prT,"uP"), false, matP);
+        gl.uniformMatrix4fv(gl.getUniformLocation(prT,"uV"), false, trans(0, -yPos, -5.5));
+        gl.uniformMatrix4fv(gl.getUniformLocation(prT,"uM"), false, mult(trans(0, yPos, 0), mult(rotX(t*0.5), rotY(t))));
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, tPB); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, tNB); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,3,gl.FLOAT,false,0,0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIB); gl.drawElements(gl.TRIANGLES, tD.i.length, gl.UNSIGNED_SHORT, 0);
+        requestAnimationFrame(draw);
+    }
+    draw(0);
+</script>
+</body>
+</html>
